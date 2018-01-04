@@ -23,7 +23,7 @@ class DevelopmentConfig(Config):
     MAIL_USERNAME = 'acmdlnu@163.com'
     MAIL_PASSWORD = 'dlnu521'
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:12345@localhost/blog'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:12345@localhost/blog'  #数据库配置文件，与狗书的配置不同
 
 class TestingConfig(Config):
     TESTING = True
