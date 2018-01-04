@@ -1,0 +1,39 @@
+{% extends "bootstrap/base.html" %} <!-- -->
+{% block title %}Flasky{% endblock %}
+
+<!--导航兰 -->
+{% block navbar %} <!-- 导航条 -->
+    <div class="navbar navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">Flasky</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="/">Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        {% for message in get_flashed_messages() %} <!--get_flashed_messages()是获取主页中flash刷新的信息，并进行相应的显示-->
+        <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+        </div>
+        {% endfor %}
+        <div class="page-header">
+            {% block page_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
