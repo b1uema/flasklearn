@@ -52,7 +52,7 @@ class User(UserMixin,db.Model):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'confirm': self.id}).decode('utf-8')
 
-    def confirm(self,token):
+    def confirm(self,token):#确认用户账户
         s = Serializer(current_app.config['SECRET_KEY'])
 
         try:
