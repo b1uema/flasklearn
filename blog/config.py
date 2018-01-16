@@ -9,7 +9,7 @@ class Config:
 
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_MAIL_SENDER = 'acmdlnu@163.com'
-    FLASKY_ADMIN = '578233897@qq.com'
+    FLASKY_ADMIN = 'acmdlnu@163.com'
 
 
     @staticmethod

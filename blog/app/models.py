@@ -4,7 +4,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer  #确认�
 from flask import current_app
 from werkzeug.security import generate_password_hash,check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
-from . import login_manager
+from . import db,login_manager
 
 
 class Permission:
@@ -101,6 +101,8 @@ class User(UserMixin,db.Model):
         super(User,self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['FLASKY_ADMIN']:
+                self.role = Role.query.filter_by(name='Administrator').first()
+            if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
 
     @property
@@ -114,9 +116,6 @@ class User(UserMixin,db.Model):
     def verify_password(self,password):
         return check_password_hash(self.password_hash,password)
 
-
-    def __repr__(self):
-        return '<User %r>'%self.username
 
     def generate_confirmation_token(self, expiration=3600): #确认令牌生成函数，生成一个待验证的token值
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -138,8 +137,8 @@ class User(UserMixin,db.Model):
         return True
 
 
-    def can(self,permissions):
-        return self.role is not None and self.role.has_permission(permissions)
+    def can(self,perm):
+        return self.role is not None and self.role.has_permission(perm)
 
     def is_administrator(self): #???????
         return self.can(Permission.ADMIN)
@@ -147,6 +146,13 @@ class User(UserMixin,db.Model):
     def ping(self):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
 
 #??????
 class AnonymousUser(AnonymousUserMixin):
@@ -158,7 +164,7 @@ class AnonymousUser(AnonymousUserMixin):
 
 
 
-
+login_manager.anonymous_user = AnonymousUser
 
 @login_manager.user_loader
 def load_user(user_id):

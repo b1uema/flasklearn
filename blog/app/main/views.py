@@ -1,33 +1,15 @@
-from flask import Flask,make_response,render_template,session,redirect,url_for,flash,app,current_app
+from flask import render_template,session,redirect,url_for,flash,abort,current_app
 from flask_login import login_required,current_user
-
 from . import main
-from .forms import NameForm,EditProfileForm
+from .forms import NameForm,EditProfileForm,EditProfileAdminForm
 from .. import db
-from ..models import User
+from ..models import User,Role,Permission
 from ..mymail import send_email
+from ..decorators import admin_required
 
 @main.route('/',methods=['GET','POST'])
 def index():
-    form=NameForm()
-    if form.validate_on_submit():#如果表单接收到数据则返回true
-        user = User.query.filter_by(username=form.name.data).first()
-        if user is None:
-            user = User(username=form.name.data)
-            db.session.add(user)
-            db.session.commit()
-            session['known'] = False
-            if current_app.config['FLASKY_ADMIN']:  #在这里使用current_app调用配置文件
-                send_email(current_app.config['FLASKY_ADMIN'],'New User','mail/new_user',user=user)
-        else:
-            session['known'] = True
-        session['name']=form.name.data
-        form.name.data=''
-        return redirect(url_for('.index'))
-            #flash('Look like you have changed your name!')
-
-    return render_template("index.html",form=form,name=session.get('name'),known=session.get('known',False))
-
+    return render_template('index.html')
 
 @main.route('/user/<username>')
 def user(username):
@@ -42,10 +24,36 @@ def edit_profile():
         current_user.name = form.name.data
         current_user.location = form.location.data
         current_user.about_me=form.about_me.data
-        db.session.add(current_user)
+        db.session.add(current_user._get_current_object())
         flash('Your profile has been updated.')
         return redirect(url_for('.user',username=current_user.username))
     form.name.data=current_user.name
     form.location.data=current_user.location
     form.about_me.data=current_user.about_me
     return render_template('edit_profile.html',form=form)
+
+@main.route('/edit-profile/<int:id>',methods=['GET','POST'])
+@login_required
+@admin_required
+def edit_profile_admin(id):
+    user=User.query.get_or_404(id)  #如果提供的id不正确则会返回404
+    form = EditProfileAdminForm(user=user)
+    if form.validate_on_submit():
+        user.email=form.email.data
+        user.username=form.username.data
+        user.confirmed=form.confirmed.data
+        user.role=Role.query.get(form.role.data)
+        user.name=form.name.data
+        user.location=form.location.data
+        user.about_me=form.about_me.data
+        db.session.add(user)
+        flash('The profile has been updated.')
+        return redirect(url_for('.user',username=user.username))
+    form.email.data=user.email
+    form.username.data=user.username
+    form.confirmed.data=user.confirmed
+    form.role.data=user.role_id
+    form.name.data=user.name
+    form.location.data=user.location
+    form.about_me.data=user.about_me
+    return render_template('edit_profile.html',form=form,user=user)

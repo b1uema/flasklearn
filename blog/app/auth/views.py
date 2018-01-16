@@ -58,7 +58,7 @@ def register():
         send_email(user.email,'Confirm Your Account','auth/mymail/confirm',user=user,token=token)
         flash('A confirmation email has been sent to you by email.')
 
-        return redirect(url_for('main.index'))
+        return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html',form=form)
 
@@ -69,6 +69,7 @@ def confirm(token):
     if current_user.confirmed:
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
+        db.session.commit()
         flash('Your have confirmed your account.Thanks!')
     else:
         flash('The confirmation link is invalid or has expired.')
