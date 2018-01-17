@@ -1,15 +1,23 @@
 from flask import render_template,session,redirect,url_for,flash,abort,current_app
 from flask_login import login_required,current_user
 from . import main
-from .forms import NameForm,EditProfileForm,EditProfileAdminForm
+from .forms import EditProfileForm,EditProfileAdminForm,PostForm
 from .. import db
-from ..models import User,Role,Permission
+from ..models import User,Role,Permission,Post
 from ..mymail import send_email
 from ..decorators import admin_required
 
 @main.route('/',methods=['GET','POST'])
 def index():
-    return render_template('index.html')
+    #Role.insert_roles()  #每次更新关系数据库的时候，都要使用这个函数，进行更新关系表的操作！！！！！
+    #执行这个语句生成关系数据库，再重新注册用户即可，之前表Role一直无法生成！！！困扰了很久
+    form = PostForm()
+    if current_user.can(Permission.WRITE) and form.validate_on_submit():
+        post=Post(body=form.body.data,author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    posts=Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html',form=form,posts=posts)
 
 @main.route('/user/<username>')
 def user(username):

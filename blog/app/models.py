@@ -1,11 +1,10 @@
-from . import db
 from datetime import datetime
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer  #确认用户账户
-from flask import current_app,request
-from werkzeug.security import generate_password_hash,check_password_hash
-from flask_login import UserMixin,AnonymousUserMixin
-from . import db,login_manager
 import hashlib
+from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import current_app, request
+from flask_login import UserMixin, AnonymousUserMixin
+from . import db, login_manager
 
 
 class Permission:
@@ -15,7 +14,7 @@ class Permission:
     MODERATE = 8
     ADMIN = 16
 
-#定义role和user数据表模型
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -68,86 +67,105 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % self.name
 
-'''class Role(db.Model):
-    __tablename__="roles" #数据库中使用表名
 
-    id = db.Column(db.Integer,primary_key=True)
-    name = db.Column(db.String(64),unique=True)
-    default = db.Column(db.Boolean,default=False,index=True) #只有一个角（jue）色的default字段要设为True
-    permissions = db.Column(db.Integer)  #权限
-    users = db.relationship('User',backref='role',lazy='dynamic')
-
-    def __repr__(self):
-        return '<Role %r>'%self.name'''
-
-
-class User(UserMixin,db.Model):
-    __tablename__="users"
-    id = db.Column(db.Integer,primary_key=True)
-    email=db.Column(db.String(64),unique=True,index=True)
-    username = db.Column(db.String(64),unique=True,index=True)
-    # 关系
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(64), unique=True, index=True)
+    username = db.Column(db.String(64), unique=True, index=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    confirmed = db.Column(db.Boolean,default=False) #如果给表中的某个字段添加了default约束，当向表中插入记录数据时，该字段如果不指定值，则系统自动填充default指定的值
-    #账户确定字段。TRUE为账户已经确定过，FAlse为账户未确定通过。
-    #password的处理
     password_hash = db.Column(db.String(128))
-    name=db.Column(db.String(64))
-    location=db.Column(db.String(64))
-    about_me=db.Column(db.Text())
-    member_since=db.Column(db.DateTime(),default=datetime.utcnow) #utcnow后边没有括号
-    last_seen=db.Column(db.DateTime(),default=datetime.utcnow) #分别是注册日期和最后访问日期
+    confirmed = db.Column(db.Boolean, default=False)
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
-    def __init__(self,**kwargs):  #修改管理员权限
-        super(User,self).__init__(**kwargs)
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['FLASKY_ADMIN']:
                 self.role = Role.query.filter_by(name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
-
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = self.gravatar_hash()
-
-
 
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
 
     @password.setter
-    def password(self,password):
+    def password(self, password):
         self.password_hash = generate_password_hash(password)
 
-    def verify_password(self,password):
-        return check_password_hash(self.password_hash,password)
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
-
-    def generate_confirmation_token(self, expiration=3600): #确认令牌生成函数，生成一个待验证的token值
+    def generate_confirmation_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'confirm': self.id}).decode('utf-8')
 
-    def confirm(self,token):#确认用户账户
+    def confirm(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])
-
         try:
-            data = s.loads(token)
+            data = s.loads(token.encode('utf-8'))
         except:
             return False
-
-        if data.get('confirm')!=self.id:
+        if data.get('confirm') != self.id:
             return False
-
         self.confirmed = True
         db.session.add(self)
         return True
 
+    def generate_reset_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'reset': self.id}).decode('utf-8')
 
-    def can(self,perm):
+    @staticmethod
+    def reset_password(token, new_password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        user = User.query.get(data.get('reset'))
+        if user is None:
+            return False
+        user.password = new_password
+        db.session.add(user)
+        return True
+
+    def generate_email_change_token(self, new_email, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps(
+            {'change_email': self.id, 'new_email': new_email}).decode('utf-8')
+
+    def change_email(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'))
+        except:
+            return False
+        if data.get('change_email') != self.id:
+            return False
+        new_email = data.get('new_email')
+        if new_email is None:
+            return False
+        if self.query.filter_by(email=new_email).first() is not None:
+            return False
+        self.email = new_email
+        self.avatar_hash = self.gravatar_hash()
+        db.session.add(self)
+        return True
+
+    def can(self, perm):
         return self.role is not None and self.role.has_permission(perm)
 
-    def is_administrator(self): #???????
+    def is_administrator(self):
         return self.can(Permission.ADMIN)
 
     def ping(self):
@@ -157,8 +175,8 @@ class User(UserMixin,db.Model):
     def gravatar_hash(self):
         return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
 
-    def gravatar(self,size=100,default='identicon',rating='g'):
-        url='https://secure.gravatar.com/avatar'
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        url = 'https://secure.gravatar.com/avatar'
         hash = self.avatar_hash or self.gravatar_hash()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
@@ -167,8 +185,6 @@ class User(UserMixin,db.Model):
         return '<User %r>' % self.username
 
 
-
-#??????
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
@@ -176,10 +192,17 @@ class AnonymousUser(AnonymousUserMixin):
     def is_administrator(self):
         return False
 
-
-
 login_manager.anonymous_user = AnonymousUser
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
