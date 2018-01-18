@@ -10,6 +10,7 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_MAIL_SENDER = 'acmdlnu@163.com'
     FLASKY_ADMIN = 'acmdlnu@163.com'
+    FLASKY_POSTS_PER_PAGE = 7
 
 
     @staticmethod

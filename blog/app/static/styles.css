@@ -1,4 +1,4 @@
-、.profile-thumbnail {
+.profile-thumbnail {
     position: absolute;
 }
 .profile-header {
@@ -30,4 +30,10 @@ div.post-thumbnail {
 div.post-content {
     margin-left: 48px;
     min-height: 48px;
+}
+div.pagination {
+    width: 100%;
+    text-align: right;
+    padding: 0px;
+    margin: 0px;
 }
