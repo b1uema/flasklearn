@@ -4,6 +4,7 @@ from flask_mail import Mail
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_pagedown import PageDown
 import pymysql
 pymysql.install_as_MySQLdb()
 from config import config
@@ -12,6 +13,7 @@ bootstrap = Bootstrap()
 mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
+pagedown = PageDown()
 
 
 
@@ -29,6 +31,7 @@ def create_app(config_name):
     moment.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
+    pagedown.init_app(app)
     #db.create_all()
 
 

@@ -1,11 +1,11 @@
-from flask_wtf import Form,FlaskForm
+from flask_wtf import FlaskForm
 from wtforms import StringField,PasswordField,BooleanField,SubmitField
 from wtforms.validators import DataRequired,Length,Email,Regexp,EqualTo
 from wtforms import ValidationError
 from ..models import User
 
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     email = StringField('Email',validators=[DataRequired(),Length(1,64),Email()])
 
     password = PasswordField('Password',validators=[DataRequired()])
@@ -13,7 +13,7 @@ class LoginForm(Form):
     submit = SubmitField('Log in')
 
 
-class RegistrationForm(Form):
+class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64),
                                              Email()])
     username = StringField('Username', validators=[
