@@ -9,7 +9,7 @@ from ..decorators import admin_required,permission_required
 
 @main.route('/',methods=['GET','POST'])
 def index():
-    #Role.insert_roles()  #每次更新关系数据库的时候，都要使用这个函数，进行更新关系表的操作！！！！！
+    Role.insert_roles()  #每次更新关系数据库的时候，都要使用这个函数，进行更新关系表的操作！！！！！
     #执行这个语句生成关系数据库，再重新注册用户即可，之前表Role一直无法生成！！！困扰了很久
     form = PostForm()
     if current_user.can(Permission.WRITE) and form.validate_on_submit():

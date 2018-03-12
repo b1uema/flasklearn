@@ -1,0 +1,1 @@
+@"f:\flasklearn\blog\venv\scripts\python.exe" "f:\flasklearn\blog\venv\Scripts\markdown_py" %*
