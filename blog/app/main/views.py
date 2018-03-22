@@ -1,4 +1,4 @@
-from flask import render_template,session,redirect,url_for,flash,abort,current_app,request
+from flask import render_template,session,redirect,url_for,flash,abort,current_app,request,make_response
 from flask_login import login_required,current_user
 from . import main
 from .forms import EditProfileForm,EditProfileAdminForm,PostForm
@@ -9,7 +9,7 @@ from ..decorators import admin_required,permission_required
 
 @main.route('/',methods=['GET','POST'])
 def index():
-    Role.insert_roles()  #每次更新关系数据库的时候，都要使用这个函数，进行更新关系表的操作！！！！！
+    #Role.insert_roles()  #每次更新关系数据库的时候，都要使用这个函数，进行更新关系表的操作！！！！！
     #执行这个语句生成关系数据库，再重新注册用户即可，之前表Role一直无法生成！！！困扰了很久
     form = PostForm()
     if current_user.can(Permission.WRITE) and form.validate_on_submit():
@@ -17,11 +17,20 @@ def index():
         db.session.add(post)
         return redirect(url_for('.index'))
     page = request.args.get('page',1,type=int)    #增加页面导航
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+    #显示所有博客文章或只显示所关注博客文章
+    show_followed = False
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed',''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
+
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
-    posts=pagination.items
-    return render_template('index.html',form=form,posts=posts,pagination=pagination)
+    posts = pagination.items
+    return render_template('index.html',form=form,posts=posts,pagination=pagination,show_followed=show_followed)
 
 @main.route('/user/<username>')
 def user(username):
@@ -159,3 +168,17 @@ def followers(username):
     return render_template('followers.html', user=user, title="Followers of",
                            endpoint='.followers', pagination=pagination,
                            follows=follows)
+
+@main.route('/all')
+@login_required
+def show_all():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed','',max_age=30*24*60*60) #max_age cookie时间
+    return resp
+
+@main.route('/followed')
+@login_required
+def show_followed():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed','1',max_age=30*24*60*60)
+    return resp
