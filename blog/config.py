@@ -5,13 +5,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = 'you not guess'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = True #自动提交变动
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_MAIL_SENDER = 'acmdlnu@163.com'
     FLASKY_ADMIN = 'acmdlnu@163.com'
     FLASKY_POSTS_PER_PAGE = 7
     FLASKY_FOLLOWERS_PER_PAGE = 10
+    FLASKY_COMMENTS_PER_PAGE = 30
 
 
     @staticmethod
