@@ -267,7 +267,7 @@ class Post(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     comments = db.relationship('Comment',
-                               backref='author',
+                               backref='post',
                                lazy='dynamic')
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):

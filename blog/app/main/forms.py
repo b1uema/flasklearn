@@ -55,5 +55,5 @@ class PostForm(FlaskForm):   #提交makedown文档
 
 
 class CommentForm(FlaskForm):
-    body = StringField('',validators=(DataRequired()))
+    body = StringField('',validators=[DataRequired()])
     submit = SubmitField('submit')
