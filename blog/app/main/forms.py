@@ -1,22 +1,22 @@
-from flask_wtf import FlaskForm
+from flask_wtf import Form
 from wtforms import StringField,BooleanField,SelectField,SubmitField,validators,TextAreaField
 from wtforms.validators import DataRequired,Length,Email,Regexp
 from ..models import Role,User
 from wtforms import ValidationError
 from flask_pagedown.fields import PageDownField
 #表单类
-class NameForm(FlaskForm):
+class NameForm(Form):
     name=StringField("what is your name?",validators=[DataRequired()])
     submit=SubmitField("submit")
 
 
-class EditProfileForm(FlaskForm):
+class EditProfileForm(Form):
     name = StringField('Real name',validators=[Length(0, 64)])
     location = StringField('Location',validators=[Length(0, 64)])
     about_me = TextAreaField('About me')
     submit = SubmitField('Submit')
 
-class EditProfileAdminForm(FlaskForm):
+class EditProfileAdminForm(Form):
     email=StringField('Email',validators=[DataRequired(), Length(1, 64),Email()])
     username = StringField('Username',validators=[
         DataRequired(), Length(1, 64),
@@ -49,11 +49,11 @@ class EditProfileAdminForm(FlaskForm):
     body=TextAreaField("What's on your mind?",validators=[DataRequired()])
     submit=SubmitField('Submit')     这个是用来提交纯文本'''
 
-class PostForm(FlaskForm):   #提交makedown文档
+class PostForm(Form):   #提交makedown文档
     body=PageDownField("What's on your mind?",validators=[DataRequired()])
     submit=SubmitField('Submit')
 
 
-class CommentForm(FlaskForm):
+class CommentForm(Form):
     body = StringField('',validators=[DataRequired()])
     submit = SubmitField('submit')
